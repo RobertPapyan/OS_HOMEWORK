@@ -1,24 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
 #include <sys/msg.h>
-#include <sys/stat.h>
-#include "message_queue.h"
+#include <sys/ipc.h>
 
-int main(int argc, char *argv[])
-{
-    int j;
-    if (argc > 1 && strcmp(argv[1], "--help") == 0) {
-        fprintf(stderr, "Usage: %s [msqid...]\n", argv[0]);
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <msqid1> [msqid2 ...]\n", argv[0]);
+        return 1;
     }
 
-    for (j = 1; j < argc; j++) {
-        if (msgctl(atoi(argv[j]), IPC_RMID, NULL) == -1) {
-            fprintf(stderr, "msgctl %s", argv[j]);
+    for (int i = 1; i < argc; i++) {
+        int msqid = atoi(argv[i]);
+        if (msgctl(msqid, IPC_RMID, NULL) == -1) {
+            perror("msgctl");
+        } else {
+            printf("Message queue with ID %d removed.\n", msqid);
         }
     }
 
-    exit(EXIT_SUCCESS);
+    return 0;
 }

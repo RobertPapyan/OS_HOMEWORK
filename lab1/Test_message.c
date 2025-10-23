@@ -5,16 +5,17 @@
 #include <string.h>
 #include <errno.h>
 
-#define MSG_TEXT_SIZE 4  
+#define MSG_TEXT_SIZE 100
 
 struct msg_buffer {
     long mtype;
-    char mtext[100]; 
+    char mtext[MSG_TEXT_SIZE];
 };
 
 int main() {
     key_t key;
     int msqid;
+    struct msg_buffer message;
 
     key = ftok("mykeyfile.c", 65);
     if (key == -1) {
@@ -28,21 +29,17 @@ int main() {
         exit(1);
     }
 
-    struct msg_buffer message;
+    message.mtype = 1;
+    strcpy(message.mtext, "Test message");
 
-    ssize_t ret = msgrcv(msqid, &message, MSG_TEXT_SIZE, 0, IPC_NOWAIT | MSG_NOERROR);
-    if (ret == -1) {
-        if (errno == ENOMSG) {
-            printf("Queue is empty, no messages available.\n");
-        } else {
-            perror("msgrcv");
-        }
+    if (msgsnd(msqid, &message, strlen(message.mtext)+1, IPC_NOWAIT) == -1) {
+        perror("msgsnd");
+        printf("Failed to send message. Queue may be full or max size exceeded.\n");
+        exit(1);
     } else {
-        printf("Message received: type = %ld, text = %.*s\n", 
-               message.mtype, (int)ret, message.mtext);
+        printf("Message sent: %s\n", message.mtext);
     }
 
     return 0;
 }
-
 
